@@ -12,8 +12,10 @@ pipeline {
         DOCKER_PASS = 'dockerhub'
         IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
-        CD_JENKINS_URL = "http://<APNA-JENKINS-ADDRESS>:8080"
+        CD_JENKINS_URL = "http://13.60.225.133:8080"
+        JENKINS_API_TOKEN = credentials("JENKINS_API_TOKEN")
     }
+    
 
     stages {
 
