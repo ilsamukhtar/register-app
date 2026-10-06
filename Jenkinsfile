@@ -12,6 +12,7 @@ pipeline {
         DOCKER_PASS = 'dockerhub'
         IMAGE_NAME = "${DOCKER_USER}" + "/" + "${APP_NAME}"
         IMAGE_TAG = "${RELEASE}-${BUILD_NUMBER}"
+        CD_JENKINS_URL = "http://<APNA-JENKINS-ADDRESS>:8080"
     }
 
     stages {
@@ -88,6 +89,35 @@ pipeline {
                     sh "docker rmi ${IMAGE_NAME}:latest"
                 }
             }
+        }
+
+        stage("Trigger CD Pipeline") {
+            steps {
+                withCredentials([string(credentialsId: 'JENKINS_API_TOKEN', variable: 'API_TOKEN')]) {
+                    sh '''
+                        curl -s --user clouduser:$API_TOKEN -X POST \
+                          -H 'cache-control: no-cache' \
+                          -H 'content-type: application/x-www-form-urlencoded' \
+                          --data "IMAGE_TAG=${IMAGE_TAG}" \
+                          "${CD_JENKINS_URL}/job/gitops-register-app-cd/buildWithParameters?token=gitops-token"
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            emailext body: '''${SCRIPT, template="groovy-html.template"}''',
+                     subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Failed",
+                     mimeType: 'text/html',
+                     to: "ilsamukhtar3@gmail.com"
+        }
+        success {
+            emailext body: '''${SCRIPT, template="groovy-html.template"}''',
+                     subject: "${env.JOB_NAME} - Build # ${env.BUILD_NUMBER} - Successful",
+                     mimeType: 'text/html',
+                     to: "ilsamukhtar3@gmail.com"
         }
     }
 }
